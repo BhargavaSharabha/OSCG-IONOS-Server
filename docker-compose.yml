@@ -1,32 +1,61 @@
 services:
-reverse-proxy:
+  watchtower:
+    image: containrrr/watchtower
+    labels:
+      - "--lable-enable"
+      - "--interval"
+      - "30"
+      - "--rolling-restart"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  reverse-proxy:
     image: traefik:v3.4
     command:
       - "--api.insecure=true"
       - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=bhargavasharabha@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
     ports:
       - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
+      - ./letsencrypt:/letsencrypt
       - ./var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - www
-      - login
-      - fastapi
   www:
-    image: usabsp/oscg-www:1.0
+    image: usabsp/oscg-www:prod
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.www.rule=Host(`oursaviourcommunitygarden.org`)"
+      - "traefik.http.routers.www.entrypoints=websecure"
+      - "traefik.http.routers.www.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "3002:80"
     restart: always
 
   login:
-    image: usabsp/oscg-login:1.0
+    image: usabsp/oscg-login:prod
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.login.rule=Host(`admin.oursaviourcommunitygarden.org`)"
+      - "traefik.http.routers.login.entrypoints=websecure"
+      - "traefik.http.routers.login.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "3005:80"
     restart: always
 
   fastapi:
-    image: usabsp/oscg-fastapi:1.0
+    image: usabsp/oscg-fastapi:prod
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "8000:8000"
     env_file:
@@ -52,3 +81,4 @@ reverse-proxy:
 
 volumes:
   mysql_data:
+  letsencrypt:
