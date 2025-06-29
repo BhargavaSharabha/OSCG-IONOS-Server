@@ -1,0 +1,40 @@
+services:
+  www:
+    image: usabsp/oscg-www:1.0
+    ports:
+      - "3002:80"
+    restart: always
+
+  login:
+    image: usabsp/oscg-login:1.0
+    ports:
+      - "3005:80"
+    restart: always
+
+  fastapi:
+    image: usabsp/oscg-fastapi:1.0
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    env_file:
+      - backend/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ItemRaj@1562
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mysql_data:
