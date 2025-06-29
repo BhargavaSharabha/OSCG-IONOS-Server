@@ -2,7 +2,7 @@ services:
   watchtower:
     image: containrrr/watchtower
     labels:
-      - "--lable-enable"
+      - "--label-enable"
       - "--interval"
       - "30"
       - "--rolling-restart"
@@ -27,7 +27,7 @@ services:
       - "8080:8080"
     volumes:
       - ./letsencrypt:/letsencrypt
-      - ./var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock
   www:
     image: usabsp/oscg-www:prod
     labels:
@@ -36,8 +36,8 @@ services:
       - "traefik.http.routers.www.entrypoints=websecure"
       - "traefik.http.routers.www.tls.certresolver=myresolver"
       - "com.centurylinklabs.watchtower.enable=true"
-    # ports:
-    #   - "3002:80"
+    ports:
+      - "3001:80"
     restart: always
 
   login:
@@ -48,8 +48,8 @@ services:
       - "traefik.http.routers.login.entrypoints=websecure"
       - "traefik.http.routers.login.tls.certresolver=myresolver"
       - "com.centurylinklabs.watchtower.enable=true"
-    # ports:
-    #   - "3005:80"
+    ports:
+      - "3002:80"
     restart: always
 
   fastapi:
